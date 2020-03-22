@@ -72,7 +72,7 @@ Function New-ZiFontV5 {
             $timerEncode = [system.diagnostics.stopwatch]::New()
             $timerInsert =  [system.diagnostics.stopwatch]::New()
 
-            foreach ($ch in $f.CodePage.CodePoints ) {
+        <#    foreach ($ch in $f.CodePage.CodePoints ) {
 
                 #$bmp = [ZiLib.CharBitmap]::new($ch);
 
@@ -106,7 +106,7 @@ Function New-ZiFontV5 {
                     $font.name
                     }
 
-                <# Create Character Bipmap #>
+                # Create Character Bipmap
                 
                 #$timerDraw.start()
                 #$bmp = [ZiLib.Extensions.BitmapExtensions]::DrawString($txt, $font, $fontsize, 0, 0, 0)
@@ -144,7 +144,39 @@ Function New-ZiFontV5 {
 
                 
                 $timerInsert.stop()
+            }#>
+
+            # Letters
+            foreach ($ch in 32..255) {
+                   # normal text
+                    $bytes = [bitconverter]::GetBytes([uint16]$ch)
+                    if ($f.CodePage.CodePageIdentifier -eq "UTF_8") {
+                    if ($ch -lt 0x00d800 -or $ch -gt 0x00dfff) {
+                            $txt =  [Char]::ConvertFromUtf32([uint32]($ch + $codepoint.delta))} else {$txt="?"}
+                    } else {
+                        if ($ch -gt 255) {
+                            $txt = $f.CodePage.Encoding.GetChars($bytes,0,2)
+                        } else {
+                            $txt = $f.CodePage.Encoding.GetChars($bytes,0,1)
+                        }
+                    }
+                    #$txt
+
+                    $character = [ZiLib.FileVersion.Common.ZiCharacter]::FromString($f, $ch, $font, $locationText, $txt)
+                    $f.AddCharacter($ch, $character)
             }
+
+            $font = [System.Drawing.Font]::new($materialiconfont, $newfontsize, "regular", [System.Drawing.GraphicsUnit]::pixel )
+            # Icons
+            foreach ($ch in 0xf0001..0xf13fe) {
+                    # mdi
+                    $txt =  [Char]::ConvertFromUtf32([uint32]($ch))
+                    #$txt
+
+                    $character = [ZiLib.FileVersion.Common.ZiCharacter]::FromString($f, $ch-0xE2001 , $font, $locationText, $txt)
+                    $f.AddCharacter($ch, $character)
+            }
+
 
             $stopwatch.Elapsed.TotalSeconds
             $timerDraw.Elapsed.TotalSeconds
